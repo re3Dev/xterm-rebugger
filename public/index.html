@@ -1,45 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Terminal</title>
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
+      width: 100%; height: 100%;
       background: #121212;
-      color: #0f0;
+      display: flex; flex-direction: column;
       font-family: 'Menlo, Monaco, Consolas, "Courier New", monospace';
-      overflow: hidden;
+      color: #0f0;
     }
     #info-container {
       flex: 0 0 20%;
-      padding: 10px;
+      padding: 10px 20px;
       background: #1b1b1b;
-      box-shadow: 0 2px 6px rgba(0, 255, 0, 0.2);
-      overflow-y: auto;
+      box-shadow: 0 2px 6px rgba(0,255,0,0.2);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
     }
-    #info-container h1 {
-      margin: 0 0 10px;
-      font-size: 18px;
-      color: #0f0;
+    #info-container div {
+      flex: 1;
+      text-align: center;
     }
-    #info-container ul {
-      margin: 0;
-      padding-left: 20px;
+    #info-container span.value {
+      font-weight: bold;
       color: #aaffaa;
-    }
-    #info-container li code {
-      background: #000;
-      padding: 2px 4px;
-      border-radius: 4px;
-      color: #0f0;
     }
     #terminal-container {
       flex: 1;
@@ -53,12 +44,9 @@
 </head>
 <body>
   <div id="info-container">
-    <h1>Available Commands</h1>
-    <ul>
-      <li><code>get_log_info</code>: Show log information</li>
-      <li><code>restart_mycool</code>: Restart mycool.service</li>
-      <!-- Add more command descriptions here -->
-    </ul>
+    <div>wlan0: <span id="wlan0-ip" class="value">loading...</span></div>
+    <div>eth0: <span id="eth0-ip" class="value">loading...</span></div>
+    <div>Link: <span id="conn-status" class="value">--</span></div>
   </div>
   <div id="terminal-container"></div>
 
@@ -66,58 +54,44 @@
   <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <script>
     const socket = io();
+
+    // Request network status once on connect
+    socket.on('connect', () => {
+      socket.emit('getNetworkStatus');
+    });
+
+    // Update UI when status arrives
+    socket.on('networkStatus', ({ wlan0, eth0, link }) => {
+      document.getElementById('wlan0-ip').textContent = wlan0 || 'N/A';
+      document.getElementById('eth0-ip').textContent = eth0 || 'N/A';
+      document.getElementById('conn-status').textContent = link ? 'Up' : 'Down';
+    });
+
+    // Initialize terminal
     const term = new Terminal({
       fontSize: 14,
-      theme: {
-        background: '#000000',
-        foreground: '#0f0',
-        cursor: '#0f0',
-        selection: '#003300'
-      }
+      theme: { background: '#000', foreground: '#0f0', cursor: '#0f0', selection: '#003300' }
     });
     term.open(document.getElementById('terminal-container'));
-
     const PROMPT = '➜ ';
     let buffer = '';
-
-    // Display the prompt in default (green) color
     term.write(PROMPT);
-
     term.onKey(e => {
       const key = e.key;
-      switch (key) {
-        case '\r':
-          term.write('\r\n');
-          const cmd = buffer.trim();
-          socket.emit('command', cmd);
-          buffer = '';
-          break;
-        case '\u007F':
-          if (buffer.length > 0) {
-            buffer = buffer.slice(0, -1);
-            term.write('\b \b');
-          }
-          break;
-        default:
-          buffer += key;
-          term.write(key);
-      }
+      if (key === '\r') {
+        term.write('\r\n');
+        socket.emit('command', buffer.trim());
+        buffer = '';
+      } else if (key === '\u007F') {
+        if (buffer.length) { buffer = buffer.slice(0, -1); term.write('\b \b'); }
+      } else { buffer += key; term.write(key); }
     });
-
-    // Color stdout responses in bright green
-    socket.on('stdout', data => {
-      term.write('\x1b[92m' + data + '\x1b[0m');
-    });
-    // Color stderr responses in bright red
-    socket.on('stderr', data => {
-      term.write('\x1b[91m' + data + '\x1b[0m');
-    });
-    // After each command, reprint the prompt
+    socket.on('stdout', data => term.write(data));
+    socket.on('stderr', data => term.write(data));
     socket.on('prompt', () => term.write(PROMPT));
 
-    window.addEventListener('resize', () => {
-      if (term.fit) term.fit();
-    });
+    // Resize handler (if fit addon used)
+    window.addEventListener('resize', () => term.fit && term.fit());
   </script>
 </body>
 </html>
