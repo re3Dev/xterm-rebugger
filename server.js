@@ -1,8 +1,9 @@
-// server.js – Express + Socket.io + node-pty with whitelist aliases and full shell access
+// server.js – Express + Socket.io + node-pty with network status checks
 const express = require('express');
 const http    = require('http');
 const socketIo= require('socket.io');
 const pty     = require('node-pty');
+const { exec } = require('child_process');
 const path    = require('path');
 
 const app    = express();
@@ -14,15 +15,44 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Whitelisted command aliases
 const COMMAND_ALIASES = {
-  get_log_info:     'sudo python log_info.py',
-  restart_mycool:   'sudo systemctl restart mycool.service',
-  network: 'ifconfig',
+  get_log_info:   'sudo python log_info.py',
+  restart_mycool: 'sudo systemctl restart mycool.service',
   // add more aliases here
 };
 
+// Helpers for network queries
+function getIp(iface, cb) {
+  exec(`ip -4 addr show dev ${iface}`, (err, stdout) => {
+    if (err) return cb(null);
+    const match = stdout.match(/inet (\d+\.\d+\.\d+\.\d+)/);
+    cb(match ? match[1] : null);
+  });
+}
+
+function getLink(iface, cb) {
+  exec(`cat /sys/class/net/${iface}/operstate`, (err, stdout) => {
+    if (err) return cb(false);
+    cb(stdout.trim() === 'up');
+  });
+}
+
 io.on('connection', socket => {
+  // Handle network status requests
+  socket.on('getNetworkStatus', () => {
+    getIp('wlan0', wlan0 => {
+      getIp('eth0', eth0 => {
+        getLink('eth0', linkUp => {
+          socket.emit('networkStatus', {
+            wlan0: wlan0,
+            eth0: eth0,
+            link: linkUp
+          });
+        });
+      });
+    });
+  });
+
   // Spawn persistent interactive shell as 'pi'
-  // Requires server to run as root to use su without password prompt
   const shell = pty.spawn('su', ['-l', 'pi'], {
     name: 'xterm-256color',
     cols: 80,
@@ -31,23 +61,20 @@ io.on('connection', socket => {
     env: { ...process.env, HOME: '/home/pi', USER: 'pi', TERM: 'xterm-256color' }
   });
 
-  // Stream data back to client
+  // Stream shell output to client
   shell.on('data', data => socket.emit('stdout', data));
 
-  // Handle incoming commands
+  // Handle commands and aliases
   socket.on('command', input => {
-    // If no input, send just Enter
     if (!input) return shell.write('\r');
-
-    // Map alias or run raw input
     const cmd = COMMAND_ALIASES[input] || input;
     shell.write(cmd + '\r');
   });
 
-  // Handle terminal resize
+  // Resize events
   socket.on('resize', ({cols, rows}) => shell.resize(cols, rows));
 
-  // Cleanup on disconnect
+  // Clean up on disconnect
   socket.on('disconnect', () => shell.kill());
 });
 
