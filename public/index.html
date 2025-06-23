@@ -33,10 +33,11 @@
     .status-value.up { color: #0f0; }
     .status-value.down { color: #f00; }
     #terminal-container {
-      flex: 1 1 auto;
+      /* Set bottom half height */
+      flex: 0 0 50%;
       position: relative;
       background: #000;
-      height: auto;
+      box-sizing: border-box;
     }
     #terminal-container .xterm {
       position: absolute;
