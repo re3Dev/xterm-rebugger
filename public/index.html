@@ -7,46 +7,40 @@
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       width: 100%; height: 100%;
-      background: #121212;
+      background: #121212; color: #0f0;
       display: flex; flex-direction: column;
-      font-family: 'Menlo, Monaco, Consolas, "Courier New", monospace';
-      color: #0f0;
+      font-family: monospace; overflow: hidden;
     }
     #info-container {
-      flex: 0 0 20%;
-      padding: 10px 20px;
-      background: #1b1b1b;
-      box-shadow: 0 2px 6px rgba(0,255,0,0.2);
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
+      flex: 0 0 20%; display: flex; align-items: center;
+      justify-content: space-evenly; background: #1b1b1b;
+      padding: 0 10px;
     }
-    #info-container div {
-      flex: 1;
-      text-align: center;
-    }
-    #info-container span.value {
-      font-weight: bold;
-      color: #aaffaa;
-    }
-    #terminal-container {
-      flex: 1;
-      background: #000;
-      overflow: hidden;
-    }
-    #terminal-container .xterm-viewport {
-      overflow-y: scroll;
-    }
+    .status-item { text-align: center; }
+    .status-label { display: block; font-size: 0.9em; color: #888; }
+    .status-value { font-size: 1.1em; font-weight: bold; }
+    .status-value.up { color: #0f0; }
+    .status-value.down { color: #f00; }
+    #terminal-container { flex: 1; background: #000; }
+    #terminal-container .xterm-viewport { overflow-y: scroll; }
   </style>
 </head>
 <body>
   <div id="info-container">
-    <div>wlan0: <span id="wlan0-ip" class="value">loading...</span></div>
-    <div>eth0: <span id="eth0-ip" class="value">loading...</span></div>
-    <div>Link: <span id="conn-status" class="value">--</span></div>
+    <div class="status-item">
+      <span class="status-label">WLAN0</span>
+      <span id="wlan0-ip" class="status-value">--</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">ETH0</span>
+      <span id="eth0-ip" class="status-value">--</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Link</span>
+      <span id="conn-status" class="status-value down">Down</span>
+    </div>
   </div>
   <div id="terminal-container"></div>
 
@@ -54,44 +48,30 @@
   <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <script>
     const socket = io();
-
-    // Request network status once on connect
-    socket.on('connect', () => {
-      socket.emit('getNetworkStatus');
+    socket.on('connect', () => socket.emit('getNetworkStatus'));
+    socket.on('networkStatus', ({wlan0, eth0, link}) => {
+      document.getElementById('wlan0-ip').textContent = wlan0 || '--';
+      document.getElementById('eth0-ip').textContent = eth0 || '--';
+      const statusEl = document.getElementById('conn-status');
+      statusEl.textContent = link ? 'Up' : 'Down';
+      statusEl.className = link ? 'status-value up' : 'status-value down';
     });
-
-    // Update UI when status arrives
-    socket.on('networkStatus', ({ wlan0, eth0, link }) => {
-      document.getElementById('wlan0-ip').textContent = wlan0 || 'N/A';
-      document.getElementById('eth0-ip').textContent = eth0 || 'N/A';
-      document.getElementById('conn-status').textContent = link ? 'Up' : 'Down';
-    });
-
-    // Initialize terminal
-    const term = new Terminal({
-      fontSize: 14,
-      theme: { background: '#000', foreground: '#0f0', cursor: '#0f0', selection: '#003300' }
-    });
+    // Terminal init
+    const term = new Terminal({fontSize:14, theme:{background:'#000',foreground:'#0f0',cursor:'#0f0',selection:'#003300'}});
     term.open(document.getElementById('terminal-container'));
     const PROMPT = '➜ ';
     let buffer = '';
     term.write(PROMPT);
-    term.onKey(e => {
-      const key = e.key;
-      if (key === '\r') {
-        term.write('\r\n');
-        socket.emit('command', buffer.trim());
-        buffer = '';
-      } else if (key === '\u007F') {
-        if (buffer.length) { buffer = buffer.slice(0, -1); term.write('\b \b'); }
-      } else { buffer += key; term.write(key); }
+    term.onKey(e=>{
+      const k = e.key;
+      if(k==='\r'){ term.write('\r\n'); socket.emit('command',buffer.trim()); buffer=''; }
+      else if(k==='\u007F'){ if(buffer) {buffer=buffer.slice(0,-1); term.write('\b \b');}} 
+      else{ buffer+=k; term.write(k);}    
     });
-    socket.on('stdout', data => term.write(data));
-    socket.on('stderr', data => term.write(data));
-    socket.on('prompt', () => term.write(PROMPT));
-
-    // Resize handler (if fit addon used)
-    window.addEventListener('resize', () => term.fit && term.fit());
+    socket.on('stdout',d=>term.write(d));
+    socket.on('stderr',d=>term.write(d));
+    socket.on('prompt',()=>term.write(PROMPT));
+    window.addEventListener('resize',()=>term.fit&&term.fit());
   </script>
 </body>
 </html>
