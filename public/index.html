@@ -36,6 +36,43 @@
       flex: 0 0 auto;
       min-width: 140px;
     }
+    /* Actions section should grow to fill remaining space */
+    #section-actions {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin-right: 0;
+    }
+    /* Action buttons styling */
+    .action-button {
+      width: 100%;
+      height: 120px; /* half of the 240px info-container */
+      background: #0f0;
+      color: #121212;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+      cursor: pointer;
+      margin: 0; /* remove default margins */
+    }
+    .action-button:disabled {
+      background: #555;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .action-button:disabled {
+      background: #555;
+      color: #888;
+      cursor: not-allowed;
+    }
+    .info-section {"}]}
+      background: #262626;
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-right: 12px;
+      flex: 0 0 auto;
+      min-width: 140px;
+    }
     .info-section h2 {
       margin: 0 0 8px;
       font-size: 1.5em; /* increased title size */
@@ -122,6 +159,15 @@
         <span id="machine-age" class="status-value">--</span>
       </div>
     </div>
+    <div id="section-actions" style="display:flex; flex-direction:column; justify-content:space-between; flex:1; margin-right:12px;">
+      <button id="btn-troubleshoot" class="action-button">Run Scan</button>
+      <button id="btn-repair" class="action-button" disabled>Attempt Repair</button>
+    </div>
+      <div class="status-item">
+        <span class="status-label">Age:</span>
+        <span id="machine-age" class="status-value">--</span>
+      </div>
+    </div>
   </div>
   <div id="terminal-container"></div>
 
@@ -173,6 +219,17 @@
     socket.on('prompt', () => term.write(PROMPT));
 
     window.addEventListener('resize', () => fitAddon.fit());
+
+    // Actions buttons behavior
+    const troubleshootBtn = document.getElementById('btn-troubleshoot');
+    const repairBtn = document.getElementById('btn-repair');
+    troubleshootBtn.addEventListener('click', () => {
+      socket.emit('troubleshoot');
+      repairBtn.disabled = false;
+    });
+    repairBtn.addEventListener('click', () => {
+      socket.emit('attemptRepair');
+    });
   </script>
 </body>
 </html>
