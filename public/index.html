@@ -11,8 +11,8 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #121212;
-      color: #0f0;
+      background: #2f2f2f; /* Steel dark */
+      color: #ecf0f1; /* Off-white */
       font-family: monospace;
       overflow: hidden;
       display: flex;
@@ -21,7 +21,7 @@
     /* Top info bar: fixed 240px height for 800x480 resolution */
     #info-container {
       height: 240px;
-      background: #1b1b1b;
+      background: #4f5b66; /* Gunmetal grey */
       display: flex;
       padding: 10px;
       box-sizing: border-box;
@@ -29,44 +29,7 @@
     }
     .info-section {
       background: #262626;
-      border: 1px solid #0f0;
-      border-radius: 6px;
-      padding: 12px;
-      margin-right: 12px;
-      flex: 0 0 auto;
-      min-width: 140px;
-    }
-    /* Actions section should grow to fill remaining space */
-    #section-actions {
-      flex: 1 1 auto;
-      min-width: 0;
-      margin-right: 0;
-    }
-    /* Action buttons styling */
-    .action-button {
-      width: 100%;
-      height: 120px; /* half of the 240px info-container */
-      background: #0f0;
-      color: #121212;
-      border: none;
-      border-radius: 4px;
-      font-size: 1em;
-      cursor: pointer;
-      margin: 0; /* remove default margins */
-    }
-    .action-button:disabled {
-      background: #555;
-      color: #888;
-      cursor: not-allowed;
-    }
-    .action-button:disabled {
-      background: #555;
-      color: #888;
-      cursor: not-allowed;
-    }
-    .info-section {"}]}
-      background: #262626;
-      border: 1px solid #0f0;
+      border: 1px solid #d35400; /* Orange accent */
       border-radius: 6px;
       padding: 12px;
       margin-right: 12px;
@@ -75,37 +38,63 @@
     }
     .info-section h2 {
       margin: 0 0 8px;
-      font-size: 1.5em; /* increased title size */
-      color: #0f0;
+      font-size: 1.5em;
+      color: #d35400;
       text-align: center;
-      border-bottom: 1px solid #0f0;
+      border-bottom: 1px solid #d35400;
       padding-bottom: 6px;
     }
-    .info-section .status-item {
+    .status-item {
       margin: 6px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .info-section .status-label {
-      color: #aaa;
-      font-size: 1em; /* larger label */
+    .status-label {
+      color: #bdc3c7;
+      font-size: 1em;
     }
-    .info-section .status-value {
+    .status-value {
       font-weight: bold;
-      font-size: 1.3em; /* larger value */
+      font-size: 1.3em;
     }
-    .status-value.up { color: #0f0; }
-    .status-value.down { color: #f00; }
+    .status-value.up { color: #d35400; }
+    .status-value.down { color: #c0392b; }
+    #section-actions {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1 1 auto;
+      margin-right: 0;
+    }
+    .action-button {
+      width: 100%;
+      height: 120px; /* half of the info-container */
+      background: #d35400;
+      color: #ecf0f1;
+      border: none;
+      border-radius: 4px;
+      font-size: 1.1em;
+      cursor: pointer;
+      margin: 0;
+    }
+    .action-button:disabled {
+      background: #4f5b66;
+      color: #bdc3c7;
+      cursor: not-allowed;
+    }
     /* Terminal container: bottom half */
     #terminal-container {
       flex: 1;
       position: relative;
-      background: #000;
+      background: #2f2f2f;
     }
     #terminal-container .xterm {
       position: absolute;
-      top: 0; bottom: 0; left: 0; right: 0;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
     }
   </style>
 </head>
@@ -113,56 +102,28 @@
   <div id="info-container">
     <div class="info-section" id="section-connectivity">
       <h2>Connectivity</h2>
-      <div class="status-item">
-        <span class="status-label">WLAN0:</span>
-        <span id="wlan0-ip" class="status-value">--</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">ETH0:</span>
-        <span id="eth0-ip" class="status-value">--</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Link:</span>
-        <span id="conn-status" class="status-value down">Down</span>
-      </div>
+      <div class="status-item"><span class="status-label">WLAN0:</span><span id="wlan0-ip" class="status-value">--</span></div>
+      <div class="status-item"><span class="status-label">ETH0:</span><span id="eth0-ip" class="status-value">--</span></div>
+      <div class="status-item"><span class="status-label">Link:</span><span id="conn-status" class="status-value down">Down</span></div>
     </div>
     <div class="info-section" id="section-errors">
       <h2>Errors</h2>
-      <div class="status-item">
-        <span class="status-label">Found:</span>
-        <span id="errors-found" class="status-value">0</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Severity:</span>
-        <span id="error-severity" class="status-value">N/A</span>
-      </div>
+      <div class="status-item"><span class="status-label">Found:</span><span id="errors-found" class="status-value">0</span></div>
+      <div class="status-item"><span class="status-label">Severity:</span><span id="error-severity" class="status-value">N/A</span></div>
     </div>
     <div class="info-section" id="section-firmware">
       <h2>Firmware</h2>
-      <div class="status-item">
-        <span class="status-label">Modified:</span>
-        <span id="firmware-modified" class="status-value">No</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Version:</span>
-        <span id="firmware-version" class="status-value">--</span>
-      </div>
+      <div class="status-item"><span class="status-label">Modified:</span><span id="firmware-modified" class="status-value">No</span></div>
+      <div class="status-item"><span class="status-label">Version:</span><span id="firmware-version" class="status-value">--</span></div>
     </div>
     <div class="info-section" id="section-machine">
       <h2>Machine</h2>
-      <div class="status-item">
-        <span class="status-label">State:</span>
-        <span id="machine-state" class="status-value">Idle</span>
-      </div>
-      <div class="status-item">
-        <span class="status-label">Age:</span>
-        <span id="machine-age" class="status-value">--</span>
-      </div>
+      <div class="status-item"><span class="status-label">State:</span><span id="machine-state" class="status-value">Idle</span></div>
+      <div class="status-item"><span class="status-label">Age:</span><span id="machine-age" class="status-value">--</span></div>
     </div>
-    <div id="section-actions" style="display:flex; flex-direction:column; justify-content:space-between; flex:1; margin-right:12px;">
-      <button id="btn-troubleshoot" class="action-button">Run Scan</button>
+    <div id="section-actions">
+      <button id="btn-troubleshoot" class="action-button">Troubleshoot</button>
       <button id="btn-repair" class="action-button" disabled>Attempt Repair</button>
-    </div>
     </div>
   </div>
   <div id="terminal-container"></div>
@@ -185,7 +146,7 @@
     // Initialize terminal with FitAddon
     const term = new Terminal({
       fontSize: 14,
-      theme: { background: '#000', foreground: '#0f0', cursor: '#0f0', selection: '#003300' }
+      theme: { background: '#2f2f2f', foreground: '#ecf0f1', cursor: '#d35400', selection: '#bdc3c7' }
     });
     const fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
