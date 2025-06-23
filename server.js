@@ -14,6 +14,7 @@ app.use(express.static('public'));
 const COMMANDS = {
   get_log_info: { cmd: 'sudo', args: ['python', 'log_info.py'] },
   restart_mycool: { cmd: 'sudo', args: ['systemctl', 'restart', 'mycool.service'] },
+  network: { cmd: 'ifconfig', args: [] },
   // add as many as you like...
 };
 
