@@ -1,45 +1,75 @@
-<!-- public/index.html -->
-<link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
-<script src="https://unpkg.com/xterm/lib/xterm.js"></script>
-<script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
-
-<div id="terminal-container" style="width:100%; height:100%;"></div>
-<script>
-  const socket = io();
-  const term   = new Terminal({ cols: 80, rows: 24 });
-  term.open(document.getElementById('terminal-container'));
-
-  const PROMPT = '$ ';
-  let buffer = '';
-
-  // print initial prompt
-  term.write(PROMPT);
-
-  term.onKey(e => {
-    const key = e.key;
-    switch (key) {
-      case '\r':   // Enter
-        term.write('\r\n');
-        const cmd = buffer.trim();
-        socket.emit('command', cmd);
-        buffer = '';
-        break;
-      case '\u007F': // Backspace
-        if (buffer.length > 0) {
-          buffer = buffer.slice(0, -1);
-          term.write('\b \b');
-        }
-        break;
-      default:
-        buffer += key;
-        term.write(key);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Terminal</title>
+  <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #e0e0e0; }
+    #terminal-container {
+      width: 90%;
+      max-width: 1000px;
+      height: 80vh;
+      margin: 40px auto;
+      background: #2e2e2e;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      overflow: hidden;
     }
-  });
+  </style>
+</head>
+<body>
+  <div id="terminal-container"></div>
 
-  // anything the server sends just gets printed
-  socket.on('stdout', data => term.write(data));
-  socket.on('stderr', data => term.write(data));
+  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const term   = new Terminal({
+      cols: 80,
+      rows: 24,
+      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
+      fontSize: 14,
+      theme: {
+        background: '#2e2e2e',
+        foreground: '#f1f1f1',
+        cursor: '#f1f1f1',
+        selection: '#5a5a5a'
+      }
+    });
+    term.open(document.getElementById('terminal-container'));
 
-  // after each command finishes, server sends a 'prompt'
-  socket.on('prompt', () => term.write(PROMPT));
-</script>
+    const PROMPT = '➜ ';
+    let buffer = '';
+
+    // Display initial prompt
+    term.write(PROMPT);
+
+    term.onKey(e => {
+      const key = e.key;
+      switch (key) {
+        case '\r': // Enter
+          term.write('\r\n');
+          const cmd = buffer.trim();
+          socket.emit('command', cmd);
+          buffer = '';
+          break;
+        case '\u007F': // Backspace
+          if (buffer.length > 0) {
+            buffer = buffer.slice(0, -1);
+            term.write('\b \b');
+          }
+          break;
+        default:
+          buffer += key;
+          term.write(key);
+      }
+    });
+
+    socket.on('stdout', data => term.write(data));
+    socket.on('stderr', data => term.write(data));
+    socket.on('prompt', () => term.write(PROMPT));
+  </script>
+</body>
+</html>
