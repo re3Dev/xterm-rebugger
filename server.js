@@ -1,4 +1,4 @@
-// server.js – Express + Socket.io + node-pty with persistent interactive login shell
+// server.js – Express + Socket.io + node-pty with persistent interactive login shell as 'pi'
 const express = require('express');
 const http    = require('http');
 const socketIo= require('socket.io');
@@ -13,15 +13,14 @@ const io     = socketIo(server);
 app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', socket => {
-  // Determine the user's shell (default to bash)
-  const shellPath = process.env.SHELL || '/bin/bash';
-  // Spawn a single persistent interactive login shell
-  const shell = pty.spawn(shellPath, ['-li'], {
+  // Spawn a login shell as the 'pi' user
+  // Server must run as root for su to work without password prompt
+  const shell = pty.spawn('su', ['-l', 'pi'], {
     name: 'xterm-256color',
     cols: 80,
     rows: 24,
-    cwd: process.env.HOME,
-    env: { ...process.env, TERM: 'xterm-256color' }
+    cwd: '/home/pi',
+    env: { ...process.env, HOME: '/home/pi', USER: 'pi', TERM: 'xterm-256color' }
   });
 
   // Forward shell output to client
@@ -29,22 +28,15 @@ io.on('connection', socket => {
 
   // Handle incoming commands by writing to the existing terminal
   socket.on('command', input => {
-    if (!input) {
-      shell.write('\r');
-    } else {
-      shell.write(input + '\r');
-    }
+    // Send newline if empty input
+    shell.write((input && input.length ? input : '') + '\r');
   });
 
-  // Resize handling
-  socket.on('resize', ({cols, rows}) => {
-    shell.resize(cols, rows);
-  });
+  // Handle resize
+  socket.on('resize', ({cols, rows}) => shell.resize(cols, rows));
 
   // Clean up on disconnect
-  socket.on('disconnect', () => {
-    shell.kill();
-  });
+  socket.on('disconnect', () => shell.kill());
 });
 
 const PORT = process.env.PORT || 3000;
