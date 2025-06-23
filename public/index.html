@@ -19,13 +19,12 @@
       flex-direction: column;
     }
     #info-container {
-      flex: 0 0 auto;
+      flex: 0 0 50%;
       padding: 10px;
       background: #1b1b1b;
       display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 20%;
+      flex-direction: row;
+      align-items: flex-start;
       box-sizing: border-box;
     }
     .status-item { text-align: center; }
@@ -49,21 +48,24 @@
   </style>
 </head>
 <body>
-  <div id="info-container">
-    <div class="status-item">
-      <span class="status-label">WLAN0</span>
-      <span id="wlan0-ip" class="status-value">--</span>
-    </div>
-    <div class="status-item">
-      <span class="status-label">ETH0</span>
-      <span id="eth0-ip" class="status-value">--</span>
-    </div>
-    <div class="status-item">
-      <span class="status-label">Link</span>
-      <span id="conn-status" class="status-value down">Down</span>
-    </div>
-  </div>
-  <div id="terminal-container"></div>
+  <div id=\"info-container\">
+    <div id=\"status-wrapper\">
+      <div class=\"status-item\">
+        <span class=\"status-label\">WLAN0<\/span>
+        <span id=\"wlan0-ip\" class=\"status-value\">--<\/span>
+      <\/div>
+      <div class=\"status-item\">
+        <span class=\"status-label\">ETH0<\/span>
+        <span id=\"eth0-ip\" class=\"status-value\">--<\/span>
+      <\/div>
+      <div class=\"status-item\">
+        <span class=\"status-label\">Link<\/span>
+        <span id=\"conn-status\" class=\"status-value down\">Down<\/span>
+      <\/div>
+    <\/div>
+    <!-- additional status/info sections can go here -->
+  <\/div>
+  <div id=\"terminal-container\"></div>
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
   <script src="https://unpkg.com/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
