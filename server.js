@@ -29,11 +29,13 @@ io.on('connection', socket => {
     const cmdToRun = COMMAND_ALIASES[input] || input;
 
     // Spawn bash -c "cmdToRun"
-    const shell = pty.spawn('bash', ['-c', cmdToRun], {
-      name: 'xterm-color',
-      cwd: process.env.HOME,
-      env: process.env,
+    const shellPath = process.env.SHELL || '/bin/bash';
+    const shell = pty.spawn(shellPath, ['-li'], {
+        name: 'xterm-color',
+        cwd: process.env.HOME,
+        env: process.env
     });
+
 
     // Stream output back
     shell.on('data', data => socket.emit('stdout', data));
