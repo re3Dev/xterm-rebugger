@@ -13,30 +13,37 @@
       height: 100%;
       display: flex;
       flex-direction: column;
-      background: #e0e0e0;
+      background: #121212;
+      color: #0f0;
       font-family: 'Menlo, Monaco, Consolas, "Courier New", monospace';
       overflow: hidden;
     }
     #info-container {
-      flex: 0 0 20%;      /* 20% of height */
+      flex: 0 0 20%;
       padding: 10px;
-      background: #ffffff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      background: #1b1b1b;
+      box-shadow: 0 2px 6px rgba(0, 255, 0, 0.2);
       overflow-y: auto;
     }
     #info-container h1 {
       margin: 0 0 10px;
       font-size: 18px;
-      color: #333333;
+      color: #0f0;
     }
     #info-container ul {
       margin: 0;
       padding-left: 20px;
-      color: #555555;
+      color: #aaffaa;
+    }
+    #info-container li code {
+      background: #000;
+      padding: 2px 4px;
+      border-radius: 4px;
+      color: #0f0;
     }
     #terminal-container {
-      flex: 1;           /* take remaining height */
-      background: #2e2e2e;
+      flex: 1;
+      background: #000;
       overflow: hidden;
     }
     #terminal-container .xterm-viewport {
@@ -62,10 +69,10 @@
     const term = new Terminal({
       fontSize: 14,
       theme: {
-        background: '#2e2e2e',
-        foreground: '#f1f1f1',
-        cursor: '#f1f1f1',
-        selection: '#5a5a5a'
+        background: '#000000',
+        foreground: '#0f0',
+        cursor: '#0f0',
+        selection: '#003300'
       }
     });
     term.open(document.getElementById('terminal-container'));
@@ -100,7 +107,6 @@
     socket.on('stderr', data => term.write(data));
     socket.on('prompt', () => term.write(PROMPT));
 
-    // Resize xterm when container resizes
     window.addEventListener('resize', () => {
       term.fit && term.fit();
     });
