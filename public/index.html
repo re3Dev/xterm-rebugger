@@ -5,136 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Terminal</title>
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <style>
     html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      display: flex; flex-direction: column;
-      background: #121212; color: #0f0;
-      font-family: 'Menlo, Monaco, Consolas, "Courier New", monospace';
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #e0e0e0;
+    }
+    #terminal-container {
+      width: 90%;
+      max-width: 1000px;
+      height: 80vh;
+      margin: 40px auto;
+      background: #2e2e2e;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
       overflow: hidden;
     }
-    /* Login overlay */
-    #login-overlay {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 10;
-    }
-    #login-box {
-      background: #1b1b1b; padding: 20px; border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,255,0,0.5);
-      width: 300px;
-    }
-    #login-box h2 {
-      margin-top: 0; color: #0f0; text-align: center;
-    }
-    #login-box label { display: block; margin: 10px 0 5px; color: #aaffaa; }
-    #login-box input {
-      width: 100%; padding: 8px; border: 1px solid #333;
-      border-radius: 4px; background: #000; color: #0f0;
-    }
-    #login-box button {
-      margin-top: 15px; width: 100%; padding: 10px;
-      background: #0f0; color: #121212; border: none;
-      border-radius: 4px; font-weight: bold;
-      cursor: pointer;
-    }
-    #login-error {
-      margin-top: 10px; color: #f33; font-size: 14px;
-      text-align: center;
-    }
-    /* Info and terminal containers */
-    #info-container { flex: 0 0 20%; padding: 10px;
-      background: #1b1b1b; box-shadow: 0 2px 6px rgba(0,255,0,0.2);
-      overflow-y: auto; display: none;
-    }
-    #info-container h1 { margin: 0 0 10px; font-size: 18px; color: #0f0; }
-    #info-container ul { margin: 0; padding-left: 20px; color: #aaffaa; }
-    #info-container li code { background: #000; padding: 2px 4px; border-radius: 4px; color: #0f0; }
-    #terminal-container { flex: 1; background: #000; overflow: hidden; display: none; }
-    #terminal-container .xterm-viewport { overflow-y: scroll; }
   </style>
 </head>
 <body>
-  <div id="login-overlay">
-    <div id="login-box">
-      <h2>Login</h2>
-      <label for="username">Username</label>
-      <input id="username" type="text" autocomplete="username" />
-      <label for="password">Password</label>
-      <input id="password" type="password" autocomplete="current-password" />
-      <button id="login-btn">Sign In</button>
-      <div id="login-error"></div>
-    </div>
-  </div>
-  <div id="info-container">
-    <h1>Available Commands</h1>
-    <ul>
-      <li><code>get_log_info</code>: Show log information</li>
-      <li><code>restart_mycool</code>: Restart mycool.service</li>
-      <!-- add more commands -->
-    </ul>
-  </div>
   <div id="terminal-container"></div>
 
-  <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
-  <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <script>
     const socket = io();
-    const loginOverlay = document.getElementById('login-overlay');
-    const errorDiv = document.getElementById('login-error');
-    const infoContainer = document.getElementById('info-container');
-    const termContainer = document.getElementById('terminal-container');
-    let term;
+    const term = new Terminal({
+      cols: 80,
+      rows: 24,
+      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
+      fontSize: 14,
+      theme: {
+        background: '#2e2e2e',
+        foreground: '#f1f1f1',
+        cursor: '#f1f1f1',
+        selection: '#5a5a5a'
+      }
+    });
+    term.open(document.getElementById('terminal-container'));
 
-    // Show login when requested
-    socket.on('requestAuth', () => {
-      loginOverlay.style.display = 'flex';
-    });
-    // Handle login button
-    document.getElementById('login-btn').addEventListener('click', () => {
-      const user = document.getElementById('username').value;
-      const pass = document.getElementById('password').value;
-      errorDiv.textContent = '';
-      socket.emit('auth', { username: user, password: pass });
-    });
-    // Auth error
-    socket.on('authError', msg => {
-      errorDiv.textContent = msg;
-    });
-    // On success, hide overlay and init terminal
-    socket.on('authSuccess', () => {
-      loginOverlay.style.display = 'none';
-      infoContainer.style.display = 'block';
-      termContainer.style.display = 'block';
+    const PROMPT = '➜ ';
+    let buffer = '';
+    term.write(PROMPT);
 
-      // Initialize xterm
-      term = new Terminal({ fontSize: 14, theme: { background: '#000', foreground: '#0f0', cursor: '#0f0', selection: '#003300' } });
-      term.open(termContainer);
-      const PROMPT = '➜ ';
-      let buffer = '';
-      term.write(PROMPT);
-      // Key handler
-      term.onKey(e => {
-        const key = e.key;
-        if (key === '\r') {
+    term.onKey(e => {
+      const key = e.key;
+      switch (key) {
+        case '\r':
           term.write('\r\n');
           socket.emit('command', buffer.trim());
           buffer = '';
-        } else if (key === '\u007F') {
-          if (buffer.length) { buffer = buffer.slice(0, -1); term.write('\b \b'); }
-        } else { buffer += key; term.write(key); }
-      });
-      // Output
-      socket.on('stdout', d => term.write('\x1b[92m' + d + '\x1b[0m'));
-      socket.on('stderr', d => term.write('\x1b[91m' + d + '\x1b[0m'));
-      socket.on('prompt', () => term.write(PROMPT));
-
-      // Resize
-      window.addEventListener('resize', () => term.fit && term.fit());
+          break;
+        case '\u007F': // Backspace
+          if (buffer.length > 0) {
+            buffer = buffer.slice(0, -1);
+            term.write('\b \b');
+          }
+          break;
+        default:
+          buffer += key;
+          term.write(key);
+      }
     });
+
+    socket.on('stdout', data => term.write(data));
+    socket.on('stderr', data => term.write(data));
+    socket.on('prompt', () => term.write(PROMPT));
   </script>
 </body>
 </html>
