@@ -23,34 +23,36 @@
       height: 240px;
       background: #1b1b1b;
       display: flex;
-      padding: 20px;
+      padding: 10px;
       box-sizing: border-box;
+      overflow-x: auto;
     }
-    /* Status panel on the left, stacked vertically */
-    #status-wrapper {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: flex-start;
-      margin-right: 40px;
+    .info-section {
+      background: #262626;
+      border: 1px solid #0f0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-right: 10px;
+      flex: 0 0 auto;
+      min-width: 120px;
     }
-    .status-item {
-      margin-bottom: 12px;
-    }
-    .status-label {
-      font-size: 0.9em;
-      color: #888;
-    }
-    .status-value {
-      font-size: 1.2em;
-      font-weight: bold;
-    }
-    .up {
+    .info-section h2 {
+      margin: 0 0 6px;
+      font-size: 1em;
       color: #0f0;
+      text-align: center;
+      border-bottom: 1px solid #0f0;
+      padding-bottom: 4px;
     }
-    .down {
-      color: #f00;
+    .info-section .status-item {
+      margin: 4px 0;
+      display: flex;
+      justify-content: space-between;
     }
+    .info-section .status-label { color: #aaa; font-size: 0.85em; }
+    .info-section .status-value { font-weight: bold; }
+    .status-value.up { color: #0f0; }
+    .status-value.down { color: #f00; }
     /* Terminal container: bottom half */
     #terminal-container {
       flex: 1;
@@ -65,21 +67,54 @@
 </head>
 <body>
   <div id="info-container">
-    <div id="status-wrapper">
+    <div class="info-section" id="section-connectivity">
+      <h2>Connectivity</h2>
       <div class="status-item">
-        <span class="status-label">WLAN0</span>
+        <span class="status-label">WLAN0:</span>
         <span id="wlan0-ip" class="status-value">--</span>
       </div>
       <div class="status-item">
-        <span class="status-label">ETH0</span>
+        <span class="status-label">ETH0:</span>
         <span id="eth0-ip" class="status-value">--</span>
       </div>
       <div class="status-item">
-        <span class="status-label">Link</span>
+        <span class="status-label">Link:</span>
         <span id="conn-status" class="status-value down">Down</span>
       </div>
     </div>
-    <!-- Other info panels can be added here in the remaining space -->
+    <div class="info-section" id="section-errors">
+      <h2>Errors</h2>
+      <div class="status-item">
+        <span class="status-label">Found:</span>
+        <span id="errors-found" class="status-value">0</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Severity:</span>
+        <span id="error-severity" class="status-value">N/A</span>
+      </div>
+    </div>
+    <div class="info-section" id="section-firmware">
+      <h2>Firmware</h2>
+      <div class="status-item">
+        <span class="status-label">Modified:</span>
+        <span id="firmware-modified" class="status-value">No</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Version:</span>
+        <span id="firmware-version" class="status-value">--</span>
+      </div>
+    </div>
+    <div class="info-section" id="section-machine">
+      <h2>Machine</h2>
+      <div class="status-item">
+        <span class="status-label">State:</span>
+        <span id="machine-state" class="status-value">Idle</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Age:</span>
+        <span id="machine-age" class="status-value">--</span>
+      </div>
+    </div>
   </div>
   <div id="terminal-container"></div>
 
