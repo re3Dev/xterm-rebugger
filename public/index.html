@@ -31,26 +31,33 @@
       background: #262626;
       border: 1px solid #0f0;
       border-radius: 6px;
-      padding: 8px;
-      margin-right: 10px;
+      padding: 12px;
+      margin-right: 12px;
       flex: 0 0 auto;
-      min-width: 120px;
+      min-width: 140px;
     }
     .info-section h2 {
-      margin: 0 0 6px;
-      font-size: 1em;
+      margin: 0 0 8px;
+      font-size: 1.5em; /* increased title size */
       color: #0f0;
       text-align: center;
       border-bottom: 1px solid #0f0;
-      padding-bottom: 4px;
+      padding-bottom: 6px;
     }
     .info-section .status-item {
-      margin: 4px 0;
+      margin: 6px 0;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
-    .info-section .status-label { color: #aaa; font-size: 0.85em; }
-    .info-section .status-value { font-weight: bold; }
+    .info-section .status-label {
+      color: #aaa;
+      font-size: 1em; /* larger label */
+    }
+    .info-section .status-value {
+      font-weight: bold;
+      font-size: 1.3em; /* larger value */
+    }
     .status-value.up { color: #0f0; }
     .status-value.down { color: #f00; }
     /* Terminal container: bottom half */
