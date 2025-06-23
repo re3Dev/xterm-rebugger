@@ -1,0 +1,14 @@
+{
+  "name": "web-terminal",
+  "version": "1.0.0",
+  "description": "Browser terminal with whitelisted commands",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "node-pty": "^0.11.1"
+  }
+}
