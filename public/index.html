@@ -11,7 +11,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      background: #111111; /* darker steel */ /* Steel dark */
+      background: #2f2f2f; /* Steel dark */
       color: #ecf0f1; /* Off-white */
       font-family: monospace;
       overflow: hidden;
@@ -21,7 +21,7 @@
     /* Top info bar: fixed 240px height for 800x480 resolution */
     #info-container {
       height: 240px;
-      background: #1b1b1b; /* lighter steel for top bar */ /* darker steel for top bar */ /* Gunmetal grey */
+      background: #4f5b66; /* Gunmetal grey */
       display: flex;
       padding: 10px;
       box-sizing: border-box;
@@ -87,7 +87,7 @@
     #terminal-container {
       flex: 1;
       position: relative;
-      background: #111111; /* darker steel */
+      background: #2f2f2f;
     }
     #terminal-container .xterm {
       position: absolute;
@@ -146,7 +146,7 @@
     // Initialize terminal with FitAddon
     const term = new Terminal({
       fontSize: 14,
-      theme: { background: '#111111', foreground: '#ecf0f1', cursor: '#d35400', selection: '#bdc3c7' }
+      theme: { background: '#2f2f2f', foreground: '#ecf0f1', cursor: '#d35400', selection: '#bdc3c7' }
     });
     const fitAddon = new FitAddon.FitAddon();
     term.loadAddon(fitAddon);
