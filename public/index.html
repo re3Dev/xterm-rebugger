@@ -6,30 +6,60 @@
   <title>Web Terminal</title>
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
   <style>
-    html, body { margin: 0; padding: 0; height: 100%; background: #e0e0e0; }
-    #terminal-container {
-      width: 90%;
-      max-width: 1000px;
-      height: 80vh;
-      margin: 40px auto;
-      background: #2e2e2e;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #e0e0e0;
+      font-family: 'Menlo, Monaco, Consolas, "Courier New", monospace';
       overflow: hidden;
+    }
+    #info-container {
+      flex: 0 0 20%;      /* 20% of height */
+      padding: 10px;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    #info-container h1 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      color: #333333;
+    }
+    #info-container ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #555555;
+    }
+    #terminal-container {
+      flex: 1;           /* take remaining height */
+      background: #2e2e2e;
+      overflow: hidden;
+    }
+    #terminal-container .xterm-viewport {
+      overflow-y: scroll;
     }
   </style>
 </head>
 <body>
+  <div id="info-container">
+    <h1>Available Commands</h1>
+    <ul>
+      <li><code>get_log_info</code>: Show log information</li>
+      <li><code>restart_mycool</code>: Restart mycool.service</li>
+      <!-- Add more command descriptions here -->
+    </ul>
+  </div>
   <div id="terminal-container"></div>
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
   <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <script>
     const socket = io();
-    const term   = new Terminal({
-      cols: 80,
-      rows: 24,
-      fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
+    const term = new Terminal({
       fontSize: 14,
       theme: {
         background: '#2e2e2e',
@@ -43,19 +73,18 @@
     const PROMPT = '➜ ';
     let buffer = '';
 
-    // Display initial prompt
     term.write(PROMPT);
 
     term.onKey(e => {
       const key = e.key;
       switch (key) {
-        case '\r': // Enter
+        case '\r':
           term.write('\r\n');
           const cmd = buffer.trim();
           socket.emit('command', cmd);
           buffer = '';
           break;
-        case '\u007F': // Backspace
+        case '\u007F':
           if (buffer.length > 0) {
             buffer = buffer.slice(0, -1);
             term.write('\b \b');
@@ -70,6 +99,11 @@
     socket.on('stdout', data => term.write(data));
     socket.on('stderr', data => term.write(data));
     socket.on('prompt', () => term.write(PROMPT));
+
+    // Resize xterm when container resizes
+    window.addEventListener('resize', () => {
+      term.fit && term.fit();
+    });
   </script>
 </body>
 </html>
