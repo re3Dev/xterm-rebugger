@@ -1,4 +1,4 @@
-// server.js – Express + Socket.io + node-pty allowing both whitelisted and arbitrary commands
+// server.js – Express + Socket.io + node-pty with persistent interactive login shell
 const express = require('express');
 const http    = require('http');
 const socketIo= require('socket.io');
@@ -12,37 +12,38 @@ const io     = socketIo(server);
 // Serve static frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Define aliases for whitelisted commands
-const COMMAND_ALIASES = {
-  get_log_info: 'sudo python log_info.py',
-  restart_mycool: 'sudo systemctl restart mycool.service',
-  // Add more aliases here
-};
-
 io.on('connection', socket => {
-  socket.emit('prompt');
+  // Determine the user's shell (default to bash)
+  const shellPath = process.env.SHELL || '/bin/bash';
+  // Spawn a single persistent interactive login shell
+  const shell = pty.spawn(shellPath, ['-li'], {
+    name: 'xterm-256color',
+    cols: 80,
+    rows: 24,
+    cwd: process.env.HOME,
+    env: { ...process.env, TERM: 'xterm-256color' }
+  });
 
+  // Forward shell output to client
+  shell.on('data', data => socket.emit('stdout', data));
+
+  // Handle incoming commands by writing to the existing terminal
   socket.on('command', input => {
-    if (!input) return socket.emit('prompt');
+    if (!input) {
+      shell.write('\r');
+    } else {
+      shell.write(input + '\r');
+    }
+  });
 
-    // Determine command to run: alias or raw input
-    const cmdToRun = COMMAND_ALIASES[input] || input;
+  // Resize handling
+  socket.on('resize', ({cols, rows}) => {
+    shell.resize(cols, rows);
+  });
 
-    // Spawn bash -c "cmdToRun"
-    const shellPath = process.env.SHELL || '/bin/bash';
-    const shell = pty.spawn(shellPath, ['-li'], {
-        name: 'xterm-color',
-        cwd: process.env.HOME,
-        env: process.env
-    });
-
-
-    // Stream output back
-    shell.on('data', data => socket.emit('stdout', data));
-    shell.on('exit', code => {
-      socket.emit('stdout', `\r\n[Process exited with code ${code}]\r\n`);
-      socket.emit('prompt');
-    });
+  // Clean up on disconnect
+  socket.on('disconnect', () => {
+    shell.kill();
   });
 });
 
