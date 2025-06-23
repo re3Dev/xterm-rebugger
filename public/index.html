@@ -80,6 +80,7 @@
     const PROMPT = '➜ ';
     let buffer = '';
 
+    // Display the prompt in default (green) color
     term.write(PROMPT);
 
     term.onKey(e => {
@@ -103,12 +104,19 @@
       }
     });
 
-    socket.on('stdout', data => term.write(data));
-    socket.on('stderr', data => term.write(data));
+    // Color stdout responses in bright green
+    socket.on('stdout', data => {
+      term.write('\x1b[92m' + data + '\x1b[0m');
+    });
+    // Color stderr responses in bright red
+    socket.on('stderr', data => {
+      term.write('\x1b[91m' + data + '\x1b[0m');
+    });
+    // After each command, reprint the prompt
     socket.on('prompt', () => term.write(PROMPT));
 
     window.addEventListener('resize', () => {
-      term.fit && term.fit();
+      if (term.fit) term.fit();
     });
   </script>
 </body>
