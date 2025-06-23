@@ -7,24 +7,45 @@
   <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
   <style>
     html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      background: #121212; color: #0f0;
-      display: flex; flex-direction: column;
-      font-family: monospace; overflow: hidden;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #121212;
+      color: #0f0;
+      font-family: monospace;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     #info-container {
-      flex: 0 0 20%; display: flex; align-items: center;
-      justify-content: space-evenly; background: #1b1b1b;
-      padding: 0 10px;
+      flex: 0 0 auto;
+      padding: 10px;
+      background: #1b1b1b;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 20%;
+      box-sizing: border-box;
     }
     .status-item { text-align: center; }
     .status-label { display: block; font-size: 0.9em; color: #888; }
     .status-value { font-size: 1.1em; font-weight: bold; }
     .status-value.up { color: #0f0; }
     .status-value.down { color: #f00; }
-    #terminal-container { flex: 1; background: #000; }
-    #terminal-container .xterm-viewport { overflow-y: scroll; }
+    #terminal-container {
+      flex: 1 1 auto;
+      position: relative;
+      background: #000;
+      height: auto;
+    }
+    #terminal-container .xterm {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+    }
   </style>
 </head>
 <body>
@@ -45,9 +66,11 @@
   <div id="terminal-container"></div>
 
   <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+  <script src="https://unpkg.com/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
   <script src="https://unpkg.com/socket.io/client-dist/socket.io.js"></script>
   <script>
     const socket = io();
+    // Network status
     socket.on('connect', () => socket.emit('getNetworkStatus'));
     socket.on('networkStatus', ({wlan0, eth0, link}) => {
       document.getElementById('wlan0-ip').textContent = wlan0 || '--';
@@ -56,22 +79,39 @@
       statusEl.textContent = link ? 'Up' : 'Down';
       statusEl.className = link ? 'status-value up' : 'status-value down';
     });
-    // Terminal init
-    const term = new Terminal({fontSize:14, theme:{background:'#000',foreground:'#0f0',cursor:'#0f0',selection:'#003300'}});
+
+    // Terminal init with FitAddon
+    const term = new Terminal({
+      fontSize: 14,
+      theme: { background: '#000', foreground: '#0f0', cursor: '#0f0', selection: '#003300' }
+    });
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
     term.open(document.getElementById('terminal-container'));
+    fitAddon.fit();
+
     const PROMPT = '➜ ';
     let buffer = '';
     term.write(PROMPT);
-    term.onKey(e=>{
-      const k = e.key;
-      if(k==='\r'){ term.write('\r\n'); socket.emit('command',buffer.trim()); buffer=''; }
-      else if(k==='\u007F'){ if(buffer) {buffer=buffer.slice(0,-1); term.write('\b \b');}} 
-      else{ buffer+=k; term.write(k);}    
+    term.onKey(e => {
+      const key = e.key;
+      if (key === '\r') {
+        term.write('\r\n');
+        socket.emit('command', buffer.trim());
+        buffer = '';
+      } else if (key === '\u007F') {
+        if (buffer) { buffer = buffer.slice(0, -1); term.write('\b \b'); }
+      } else {
+        buffer += key;
+        term.write(key);
+      }
     });
-    socket.on('stdout',d=>term.write(d));
-    socket.on('stderr',d=>term.write(d));
-    socket.on('prompt',()=>term.write(PROMPT));
-    window.addEventListener('resize',()=>term.fit&&term.fit());
+
+    socket.on('stdout', data => term.write(data));
+    socket.on('stderr', data => term.write(data));
+    socket.on('prompt', () => term.write(PROMPT));
+
+    window.addEventListener('resize', () => fitAddon.fit());
   </script>
 </body>
 </html>
