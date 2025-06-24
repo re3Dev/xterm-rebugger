@@ -17,6 +17,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const COMMAND_ALIASES = {
   get_log_info:   'sudo python log_info.py',
   restart_mycool: 'sudo systemctl restart mycool.service',
+  network: 'ifconfig',
+  scan: 'echo "Scanning..." && echo "3 Errors found"',
   // add more aliases here
 };
 
